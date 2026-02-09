@@ -1,5 +1,10 @@
 export const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:4000";
 
+export const getErrorMessage = (error: unknown) => {
+  if (error instanceof Error) return error.message;
+  return "Onbekende fout";
+};
+
 export const statusLabels: Record<string, string> = {
   AANGEVRAAGD: "Aangevraagd",
   IN_BEHANDELING: "In behandeling",

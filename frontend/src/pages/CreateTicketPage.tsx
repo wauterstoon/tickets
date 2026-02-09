@@ -5,7 +5,7 @@ import { Textarea } from "../components/Textarea";
 import { Select } from "../components/Select";
 import { Button } from "../components/Button";
 import { useToast } from "../components/ToastProvider";
-import { API_URL } from "../lib/api";
+import { API_URL, getErrorMessage } from "../lib/api";
 
 interface AttachmentPreview {
   file: File;
@@ -90,7 +90,12 @@ export default function CreateTicketPage() {
       setTicketNumber(data.ticketNumber);
       notify("Ticket succesvol aangemaakt.", "success");
     } catch (error) {
-      notify("Er ging iets mis bij het aanmaken.", "error");
+      notify(
+        `Backend niet bereikbaar of fout bij verzenden. Start de backend op poort 4000. (${getErrorMessage(
+          error
+        )})`,
+        "error"
+      );
     } finally {
       setLoading(false);
     }

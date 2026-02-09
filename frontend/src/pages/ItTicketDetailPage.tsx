@@ -6,7 +6,7 @@ import { Card } from "../components/Card";
 import { Input } from "../components/Input";
 import { Select } from "../components/Select";
 import { Textarea } from "../components/Textarea";
-import { API_URL, priorityLabels, priorityTone, statusLabels, statusTone } from "../lib/api";
+import { API_URL, getErrorMessage, priorityLabels, priorityTone, statusLabels, statusTone } from "../lib/api";
 import { Message, Ticket, User } from "../lib/types";
 import { io, Socket } from "socket.io-client";
 import { useToast } from "../components/ToastProvider";
@@ -28,28 +28,42 @@ export default function ItTicketDetailPage() {
 
   const loadTicket = async () => {
     if (!email || !number) return;
-    const response = await fetch(`${API_URL}/api/it/tickets/${number}`, {
-      headers: { "x-user-email": email }
-    });
-    if (!response.ok) {
-      notify("Geen toegang tot dit ticket.", "error");
-      return;
+    try {
+      const response = await fetch(`${API_URL}/api/it/tickets/${number}`, {
+        headers: { "x-user-email": email }
+      });
+      if (!response.ok) {
+        notify("Geen toegang tot dit ticket.", "error");
+        return;
+      }
+      const data = await response.json();
+      setTicket(data.ticket);
+      setEngineers(data.engineers);
+      setAssignedToId(data.ticket.assignedToId ?? "");
+      setStatus(data.ticket.status);
+    } catch (error) {
+      notify(
+        `Backend niet bereikbaar. Start de backend op poort 4000. (${getErrorMessage(error)})`,
+        "error"
+      );
     }
-    const data = await response.json();
-    setTicket(data.ticket);
-    setEngineers(data.engineers);
-    setAssignedToId(data.ticket.assignedToId ?? "");
-    setStatus(data.ticket.status);
   };
 
   const loadMessages = async () => {
     if (!email || !number) return;
-    const response = await fetch(
-      `${API_URL}/api/tickets/${number}/messages?email=${encodeURIComponent(email)}`
-    );
-    if (!response.ok) return;
-    const data = await response.json();
-    setMessages(data);
+    try {
+      const response = await fetch(
+        `${API_URL}/api/tickets/${number}/messages?email=${encodeURIComponent(email)}`
+      );
+      if (!response.ok) return;
+      const data = await response.json();
+      setMessages(data);
+    } catch (error) {
+      notify(
+        `Berichten laden mislukt. Backend offline? (${getErrorMessage(error)})`,
+        "error"
+      );
+    }
   };
 
   useEffect(() => {
@@ -66,37 +80,51 @@ export default function ItTicketDetailPage() {
 
   const handleUpdate = async () => {
     if (!number || !email) return;
-    const response = await fetch(`${API_URL}/api/tickets/${number}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json", "x-user-email": email },
-      body: JSON.stringify({
-        status,
-        assignedToId: assignedToId || null,
-        note: note || undefined,
-        publicMessage: publicMessage || undefined
-      })
-    });
-    if (!response.ok) {
-      notify("Update mislukt.", "error");
-      return;
+    try {
+      const response = await fetch(`${API_URL}/api/tickets/${number}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", "x-user-email": email },
+        body: JSON.stringify({
+          status,
+          assignedToId: assignedToId || null,
+          note: note || undefined,
+          publicMessage: publicMessage || undefined
+        })
+      });
+      if (!response.ok) {
+        notify("Update mislukt.", "error");
+        return;
+      }
+      notify("Ticket bijgewerkt.", "success");
+      setNote("");
+      setPublicMessage("");
+      await loadTicket();
+    } catch (error) {
+      notify(
+        `Update mislukt. Backend offline? (${getErrorMessage(error)})`,
+        "error"
+      );
     }
-    notify("Ticket bijgewerkt.", "success");
-    setNote("");
-    setPublicMessage("");
-    await loadTicket();
   };
 
   const handleSendMessage = async () => {
     if (!newMessage || !email || !number) return;
-    const response = await fetch(`${API_URL}/api/tickets/${number}/messages`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, content: newMessage })
-    });
-    if (response.ok) {
-      setNewMessage("");
-    } else {
-      notify("Bericht verzenden mislukt.", "error");
+    try {
+      const response = await fetch(`${API_URL}/api/tickets/${number}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, content: newMessage })
+      });
+      if (response.ok) {
+        setNewMessage("");
+      } else {
+        notify("Bericht verzenden mislukt.", "error");
+      }
+    } catch (error) {
+      notify(
+        `Bericht verzenden mislukt. Backend offline? (${getErrorMessage(error)})`,
+        "error"
+      );
     }
   };
 

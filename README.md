@@ -66,6 +66,13 @@ VITE_API_URL="http://localhost:4000"
 - De chat is realtime via Socket.IO.
 - Berichten worden direct in beide interfaces getoond.
 
+## Troubleshooting
+### ERR_CONNECTION_REFUSED / Failed to fetch
+Dit betekent bijna altijd dat de backend niet draait of niet bereikbaar is. Controleer:
+- Start de backend in een aparte terminal: `cd backend && npm run dev`.
+- Controleer of `PORT=4000` vrij is.
+- Zet `VITE_API_URL` in `frontend/.env` indien de backend op een andere host of poort draait.
+
 ## Datamodel (Prisma)
 - User (id, email, name, role, createdAt)
 - Ticket (id, number, title, description, teamviewerId, teamviewerPassword, priority, status, requesterId, assignedToId, createdAt, updatedAt)

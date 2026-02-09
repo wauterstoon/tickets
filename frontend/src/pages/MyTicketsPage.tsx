@@ -3,11 +3,13 @@ import { Card } from "../components/Card";
 import { Input } from "../components/Input";
 import { Button } from "../components/Button";
 import { Badge } from "../components/Badge";
-import { API_URL, statusLabels, statusTone, priorityLabels, priorityTone } from "../lib/api";
+import { API_URL, getErrorMessage, statusLabels, statusTone, priorityLabels, priorityTone } from "../lib/api";
 import { Ticket } from "../lib/types";
 import { Link } from "react-router-dom";
+import { useToast } from "../components/ToastProvider";
 
 export default function MyTicketsPage() {
+  const { notify } = useToast();
   const [email, setEmail] = useState("");
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(false);
@@ -15,10 +17,20 @@ export default function MyTicketsPage() {
   const loadTickets = async () => {
     if (!email) return;
     setLoading(true);
-    const response = await fetch(`${API_URL}/api/tickets/my?email=${encodeURIComponent(email)}`);
-    const data = await response.json();
-    setTickets(data);
-    setLoading(false);
+    try {
+      const response = await fetch(`${API_URL}/api/tickets/my?email=${encodeURIComponent(email)}`);
+      if (!response.ok) throw new Error("Tickets laden mislukt.");
+      const data = await response.json();
+      setTickets(data);
+    } catch (error) {
+      setTickets([]);
+      notify(
+        `Backend niet bereikbaar. Start de backend op poort 4000. (${getErrorMessage(error)})`,
+        "error"
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {

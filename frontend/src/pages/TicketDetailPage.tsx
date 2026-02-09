@@ -4,7 +4,7 @@ import { Card } from "../components/Card";
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
 import { Input } from "../components/Input";
-import { API_URL, priorityLabels, priorityTone, statusLabels, statusTone } from "../lib/api";
+import { API_URL, getErrorMessage, priorityLabels, priorityTone, statusLabels, statusTone } from "../lib/api";
 import { ActivityLog, Message, Ticket } from "../lib/types";
 import { io, Socket } from "socket.io-client";
 import { useToast } from "../components/ToastProvider";
@@ -24,25 +24,42 @@ export default function TicketDetailPage() {
   const loadTicket = async () => {
     if (!email || !number) return;
     setLoading(true);
-    const response = await fetch(`${API_URL}/api/tickets/${number}?email=${encodeURIComponent(email)}`);
-    if (!response.ok) {
-      notify("Ticket niet gevonden of geen toegang.", "error");
+    try {
+      const response = await fetch(
+        `${API_URL}/api/tickets/${number}?email=${encodeURIComponent(email)}`
+      );
+      if (!response.ok) {
+        notify("Ticket niet gevonden of geen toegang.", "error");
+        setLoading(false);
+        return;
+      }
+      const data = await response.json();
+      setTicket(data);
+    } catch (error) {
+      notify(
+        `Backend niet bereikbaar. Start de backend op poort 4000. (${getErrorMessage(error)})`,
+        "error"
+      );
+    } finally {
       setLoading(false);
-      return;
     }
-    const data = await response.json();
-    setTicket(data);
-    setLoading(false);
   };
 
   const loadMessages = async () => {
     if (!email || !number) return;
-    const response = await fetch(
-      `${API_URL}/api/tickets/${number}/messages?email=${encodeURIComponent(email)}`
-    );
-    if (!response.ok) return;
-    const data = await response.json();
-    setMessages(data);
+    try {
+      const response = await fetch(
+        `${API_URL}/api/tickets/${number}/messages?email=${encodeURIComponent(email)}`
+      );
+      if (!response.ok) return;
+      const data = await response.json();
+      setMessages(data);
+    } catch (error) {
+      notify(
+        `Berichten laden mislukt. Backend offline? (${getErrorMessage(error)})`,
+        "error"
+      );
+    }
   };
 
   useEffect(() => {
@@ -59,15 +76,22 @@ export default function TicketDetailPage() {
 
   const handleSendMessage = async () => {
     if (!newMessage || !email || !number) return;
-    const response = await fetch(`${API_URL}/api/tickets/${number}/messages`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, content: newMessage })
-    });
-    if (response.ok) {
-      setNewMessage("");
-    } else {
-      notify("Bericht verzenden mislukt.", "error");
+    try {
+      const response = await fetch(`${API_URL}/api/tickets/${number}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, content: newMessage })
+      });
+      if (response.ok) {
+        setNewMessage("");
+      } else {
+        notify("Bericht verzenden mislukt.", "error");
+      }
+    } catch (error) {
+      notify(
+        `Bericht verzenden mislukt. Backend offline? (${getErrorMessage(error)})`,
+        "error"
+      );
     }
   };
 

@@ -5,10 +5,12 @@ import { Button } from "../components/Button";
 import { Card } from "../components/Card";
 import { Input } from "../components/Input";
 import { Select } from "../components/Select";
-import { API_URL, priorityLabels, priorityTone, statusLabels, statusTone } from "../lib/api";
+import { API_URL, getErrorMessage, priorityLabels, priorityTone, statusLabels, statusTone } from "../lib/api";
+import { useToast } from "../components/ToastProvider";
 import { Ticket } from "../lib/types";
 
 export default function ItDashboardPage() {
+  const { notify } = useToast();
   const [email, setEmail] = useState("");
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [filters, setFilters] = useState({
@@ -27,11 +29,20 @@ export default function ItDashboardPage() {
     if (filters.assigned) params.set("assigned", filters.assigned);
     if (filters.sort) params.set("sort", filters.sort);
 
-    const response = await fetch(`${API_URL}/api/it/tickets?${params.toString()}`, {
-      headers: { "x-user-email": email }
-    });
-    const data = await response.json();
-    setTickets(data);
+    try {
+      const response = await fetch(`${API_URL}/api/it/tickets?${params.toString()}`, {
+        headers: { "x-user-email": email }
+      });
+      if (!response.ok) throw new Error("Tickets laden mislukt.");
+      const data = await response.json();
+      setTickets(data);
+    } catch (error) {
+      setTickets([]);
+      notify(
+        `Backend niet bereikbaar of geen toegang. (${getErrorMessage(error)})`,
+        "error"
+      );
+    }
   };
 
   useEffect(() => {
