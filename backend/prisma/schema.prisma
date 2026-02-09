@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  IT
+}
+
+enum TicketPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum TicketStatus {
+  AANGEVRAAGD
+  IN_BEHANDELING
+  OPGELOST
+}
+
+enum MessageSenderRole {
+  USER
+  IT
+}
+
+enum ActivityType {
+  CREATED
+  ASSIGNED
+  STATUS_CHANGED
+  MESSAGE_ADDED
+  ATTACHMENT_ADDED
+  NOTE_ADDED
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  role      UserRole @default(USER)
+  createdAt DateTime @default(now())
+  tickets   Ticket[] @relation("RequesterTickets")
+  assigned  Ticket[] @relation("AssignedTickets")
+  messages  Message[]
+}
+
+model Ticket {
+  id                 String         @id @default(uuid())
+  number             Int            @unique
+  title              String
+  description        String
+  teamviewerId       String
+  teamviewerPassword String
+  priority           TicketPriority
+  status             TicketStatus   @default(AANGEVRAAGD)
+  requesterId        String
+  requester          User           @relation("RequesterTickets", fields: [requesterId], references: [id])
+  assignedToId       String?
+  assignedTo         User?          @relation("AssignedTickets", fields: [assignedToId], references: [id])
+  attachments        Attachment[]
+  messages           Message[]
+  activityLogs       ActivityLog[]
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+}
+
+model Attachment {
+  id           String   @id @default(uuid())
+  ticketId     String
+  ticket       Ticket   @relation(fields: [ticketId], references: [id])
+  filename     String
+  originalName String
+  mimeType     String
+  size         Int
+  path         String
+  createdAt    DateTime @default(now())
+}
+
+model Message {
+  id         String            @id @default(uuid())
+  ticketId   String
+  ticket     Ticket            @relation(fields: [ticketId], references: [id])
+  senderId   String
+  sender     User              @relation(fields: [senderId], references: [id])
+  senderRole MessageSenderRole
+  content    String
+  createdAt  DateTime          @default(now())
+}
+
+model ActivityLog {
+  id        String       @id @default(uuid())
+  ticketId  String
+  ticket    Ticket       @relation(fields: [ticketId], references: [id])
+  type      ActivityType
+  metadata  Json
+  createdAt DateTime     @default(now())
+}
