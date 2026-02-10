@@ -1,86 +1,36 @@
-# IT Support Ticket System
+# Django IT Support Ticket System
 
-Een full-stack webapplicatie voor het beheren van IT-supporttickets met realtime chat, bestandsuploads en een professioneel dashboard.
+This repository now includes a complete Python + Django ticketing application in `django_ticketing/`.
 
-## Structuur
-- `frontend/` — React + TypeScript (Vite) + TailwindCSS
-- `backend/` — Node.js + Express (TypeScript) + Prisma + Socket.IO
-- `uploads/` — lokale opslag voor bijlagen (dev)
+## Application features
+- Authentication (login/logout) using Django auth.
+- Dashboard with ticket status counters.
+- Ticket CRUD (create, list, detail, update, delete).
+- Assignment and priority/status management.
+- Ticket comments for collaboration.
+- Django admin support for Tickets and Comments.
 
-## Vereisten
-- Node.js 18+
-- PostgreSQL
+## Project structure
+- `django_ticketing/config/` — project configuration (settings/urls/asgi/wsgi)
+- `django_ticketing/helpdesk/` — core ticketing app (models, views, forms, admin, tests)
+- `django_ticketing/templates/` — base, auth, and helpdesk templates
+- `django_ticketing/static/` — application stylesheet
 
-## Setup
-### 1) Backend
+## Quick start
 ```bash
-cd backend
-cp .env.example .env
-npm install
-npm run prisma:generate
-npm run prisma:migrate
-npm run prisma:seed
-npm run dev
+cd django_ticketing
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py createsuperuser
+python manage.py runserver
 ```
 
-### 2) Frontend
+Open http://127.0.0.1:8000.
+
+## Test
 ```bash
-cd frontend
-npm install
-npm run dev
+cd django_ticketing
+python manage.py test
 ```
-
-Open daarna `http://localhost:5173`.
-
-## Omgevingsvariabelen
-`backend/.env`:
-```
-DATABASE_URL="postgresql://user:password@localhost:5432/itsupport"
-PORT=4000
-CLIENT_URL="http://localhost:5173"
-IT_ADMIN_EMAILS="it.lisa@example.com,it.bram@example.com,it.sara@example.com"
-```
-
-`frontend/.env` (optioneel):
-```
-VITE_API_URL="http://localhost:4000"
-```
-
-## Gebruik
-### Ticket aanmaken
-1. Ga naar `/create`.
-2. Vul alle verplichte velden in en upload optioneel bijlagen.
-3. Na verzenden verschijnt een ticketnummer (sequentieel).
-
-### Mijn tickets
-1. Ga naar `/my-tickets`.
-2. Vul je e-mailadres in en laad je tickets.
-3. Klik op een ticket voor detail en chat.
-
-### IT dashboard
-1. Ga naar `/it`.
-2. Vul een e-mailadres in dat in `IT_ADMIN_EMAILS` staat.
-3. Gebruik filters, zoek op ticketnummer en open een ticket.
-
-### Chatten
-- De chat is realtime via Socket.IO.
-- Berichten worden direct in beide interfaces getoond.
-
-## Troubleshooting
-### ERR_CONNECTION_REFUSED / Failed to fetch
-Dit betekent bijna altijd dat de backend niet draait of niet bereikbaar is. Controleer:
-- Start de backend in een aparte terminal: `cd backend && npm run dev`.
-- Controleer of `PORT=4000` vrij is.
-- Zet `VITE_API_URL` in `frontend/.env` indien de backend op een andere host of poort draait.
-
-## Datamodel (Prisma)
-- User (id, email, name, role, createdAt)
-- Ticket (id, number, title, description, teamviewerId, teamviewerPassword, priority, status, requesterId, assignedToId, createdAt, updatedAt)
-- Attachment (id, ticketId, filename, originalName, mimeType, size, path, createdAt)
-- Message (id, ticketId, senderId, senderRole, content, createdAt)
-- ActivityLog (id, ticketId, type, metadata, createdAt)
-
-## Belangrijke notities
-- TeamViewer wachtwoorden worden niet gelogd en zijn afgeschermd in de UI.
-- Bestandsuploads worden lokaal opgeslagen in `/uploads`.
-- Autorisatie is e-mail gebaseerd (geen wachtwoord), klaar voor uitbreiding.
