@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block title %}Ticket #{{ ticket.id }}{% endblock %}
+{% block content %}
+  <h2>{{ ticket.title }}</h2>
+  <p>{{ ticket.description }}</p>
+  <p><strong>Status:</strong> {{ ticket.get_status_display }}</p>
+  <p><strong>Priority:</strong> {{ ticket.get_priority_display }}</p>
+  <p><strong>Created by:</strong> {{ ticket.created_by.username }}</p>
+  <p><strong>Assigned to:</strong> {% if ticket.assigned_to %}{{ ticket.assigned_to.username }}{% else %}-{% endif %}</p>
+
+  <p>
+    <a href="{% url 'helpdesk:ticket-update' ticket.pk %}">Edit</a> |
+    <a href="{% url 'helpdesk:ticket-delete' ticket.pk %}">Delete</a>
+  </p>
+
+  <h3>Comments</h3>
+  <ul>
+    {% for comment in ticket.comments.all %}
+      <li>
+        <strong>{{ comment.author.username }}</strong> ({{ comment.created_at }}):
+        <p>{{ comment.body }}</p>
+      </li>
+    {% empty %}
+      <li>No comments yet.</li>
+    {% endfor %}
+  </ul>
+
+  <h4>Add comment</h4>
+  <form method="post" action="{% url 'helpdesk:ticket-comment-create' ticket.pk %}">
+    {% csrf_token %}
+    {{ comment_form.as_p }}
+    <button type="submit">Post comment</button>
+  </form>
+{% endblock %}

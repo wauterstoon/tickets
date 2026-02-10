@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Tickets{% endblock %}
+{% block content %}
+  <h2>Tickets</h2>
+  <form method="get" class="filter-row">
+    <input type="text" name="q" value="{{ request.GET.q }}" placeholder="Search tickets..." />
+    <select name="status">
+      <option value="">All statuses</option>
+      <option value="OPEN">Open</option>
+      <option value="IN_PROGRESS">In Progress</option>
+      <option value="RESOLVED">Resolved</option>
+      <option value="CLOSED">Closed</option>
+    </select>
+    <button type="submit">Filter</button>
+  </form>
+
+  <table>
+    <thead>
+      <tr><th>ID</th><th>Title</th><th>Status</th><th>Priority</th><th>Owner</th><th>Assignee</th></tr>
+    </thead>
+    <tbody>
+      {% for ticket in tickets %}
+        <tr>
+          <td>{{ ticket.pk }}</td>
+          <td><a href="{% url 'helpdesk:ticket-detail' ticket.pk %}">{{ ticket.title }}</a></td>
+          <td>{{ ticket.get_status_display }}</td>
+          <td>{{ ticket.get_priority_display }}</td>
+          <td>{{ ticket.created_by.username }}</td>
+          <td>{% if ticket.assigned_to %}{{ ticket.assigned_to.username }}{% else %}-{% endif %}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="6">No tickets found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}
